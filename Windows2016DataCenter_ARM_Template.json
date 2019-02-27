@@ -1,0 +1,247 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+     
+      "windowsOSVersion": {
+        "type": "string",
+        "defaultValue": "2016-Datacenter",
+        "allowedValues": [
+          "2016-Nano-Server",
+          "2016-Datacenter-with-Containers",
+          "2016-Datacenter",
+          "2019-Datacenter"
+        ],
+        "metadata": {
+          "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+        }
+      },
+      "adminUsername": {
+        "type": "string",
+        "metadata": {
+          "description": "Username for the Virtual Machine."
+        }
+      },
+      "adminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "Password for the Virtual Machine."
+        }
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+          "description": "Deployment location for VM. (example: West US)"
+        }
+      },
+      "virtualNetworkName": {
+        "type": "string",
+        "defaultValue" : "",
+        "metadata": {
+            "description": "Virtual Network Name - used for both new and existing network setup"
+        }
+      },
+      "virtualNetworkRGName": {
+        "type": "string",
+        "defaultValue" : "",
+        "metadata": {
+            "description": "The resource group in which the existing vnet resides - used only for existing RG"
+        }
+      },
+      "virtualNetworkAddressPrefix": {
+        "type": "string",
+        "defaultValue" : "",
+        "metadata": {
+            "description": "Virtual Network Address prefix (example: 10.0.0.0/16)"
+        }
+      },
+      "subnetPrefix": {
+        "type": "string",
+        "defaultValue" : "",
+        "metadata": {
+            "description": "Subnet Prefix with mask (example 10.0.0.0/24)"
+        }
+      },
+      "subnetName": {
+        "type": "string",
+        "defaultValue" : "",
+        "metadata": {
+            "description": "Name of subnet where NIC will be deployed"
+        }
+      },
+      "ipAddress" : {
+        "type" : "string",
+        "defaultValue" : "",
+        "metadata" : {
+            "description" : "Server IP Address in subnet"
+        }
+      },
+      "vmName": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "Name for the Virtual Machine; All lowercase max 15 letters or numbers only Example: vmuse2apdeis01"
+        }
+      },
+      "vmSize" : {
+        "type" : "string",
+        "defaultValue" : "Standard_DS1_v2",
+        "allowedValues" : [
+            "Standard_DS1_v2",
+            "Standard_D2s_v3",
+            "Standard_D4s_v3"
+        ],
+        "metadata" : {
+            "description" : "Size of the Virtual Machine"
+        }
+      },
+      "storageAccountNewOrExisting": {
+        "type": "string",
+        "defaultValue": "new",
+        "allowedValues": [
+            "new",
+            "existing"
+        ],
+        "metadata": {
+            "description": "Identifies whether to use new or existing Storage Account - where VM files will be stored"
+        }
+      },
+      "newStorageAccountName": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "Storage account name where VM files will be stored - used for both new and existing storage account.  Example: savmuse2apdeis"
+        }
+      },
+      "storageAccountType": {
+        "type": "string",
+        "defaultValue": "Standard_LRS",
+        "allowedValues": [
+            "Standard_LRS"
+        ],
+        "metadata": {
+            "description": "The type of storage account created."
+        }
+      },
+      "storageAccountExistingRG": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "The Existing Resource Group used for the existing storage account - only used with existing Storage Accounts"
+        }
+      },
+      "baseUrl": {
+        "type": "string",
+        "metadata": {
+            "artifactsBaseUrl": "",
+            "description": "URL to acquire other templates"
+        },
+        "defaultValue": "https://raw.githubusercontent.com/scotsapino/azbb/master"
+      }
+    },
+    "variables": {
+      "vnetID":  "[resourceId(parameters('virtualNetworkRGName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+      "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
+      "storageAccountSetupURL": "[concat(parameters('baseUrl'),'/storageAccount-',parameters('storageAccountNewOrExisting'),'.json')]"
+    },
+    
+    "resources": [
+      {
+            "name": "SettingUpStorageAccount",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('storageAccountSetupURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "storageAccountType": {
+                        "value": "[parameters('storageAccountType')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[parameters('newStorageAccountName')]"
+                    },
+                    "storageAccountExistingRG": {
+                        "value": "[parameters('storageAccountExistingRG')]"
+                    }
+                }
+            }
+      },
+      {
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(parameters('vmName'),'-Nic0')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2018-10-01",
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "privateIPAllocationMethod": "Static",
+                "privateIPAddress" : "[parameters('ipAddress')]",
+                "subnet": {
+                  "id": "[variables('subnetRef')]"      
+                }
+              }
+            }
+          ]
+        }
+      },
+
+      {
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmName')]",
+        "location": "[parameters('location')]",
+        "apiVersion": "2018-10-01",
+        "dependsOn": [
+          "[concat('Microsoft.Resources/deployments/', 'SettingUpStorageAccount')]",
+          "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('vmName'),'-Nic0'))]"
+        ],
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[parameters('vmName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "[parameters('windowsOSVersion')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name" : "[concat(parameters('vmName'),'-osDisk')]",
+              "createOption": "FromImage"
+            }
+        },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "properties" : {
+                    "primary" : true
+                },
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-Nic0'))]"
+              }
+            ]
+          },
+            "diagnosticsProfile": {
+                "bootDiagnostics": {
+                "enabled": true,
+                "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+                }
+            }
+        }
+      }
+    ]
+    
+  }

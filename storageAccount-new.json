@@ -36,6 +36,7 @@
       "name": "[concat(parameters('storageAccountName'))]",
       "apiVersion": "2015-06-15",
       "location": "[parameters('location')]",
+      "kind" : "StorageV2",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
