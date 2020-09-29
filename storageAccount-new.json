@@ -7,6 +7,7 @@
     },
     "CostCenter" :{
       "type" : "string",
+      "defaultValue": "1052",
       "allowedValues": [
         "1052",
         "1054",
@@ -20,6 +21,7 @@
     },
     "DataCenter" :{
       "type" : "string",
+      "defaultValue": "WestUS2",
       "allowedValues": [
         "WestUS1",
         "WestUS2",
@@ -42,7 +44,7 @@
     },
     "Environment" : {
       "type" : "string",
-      "defaultValue": "",
+      "defaultValue": "Production",
       "allowedValues": [
         "Production",
         "Development",
@@ -54,7 +56,7 @@
     },
     "SupportGroup" : {
       "type" : "string",
-      "defaultValue": "",
+      "defaultValue": "Infrastructure",
       "allowedValues": [
         "Infrastructure",
         "DevOps"
