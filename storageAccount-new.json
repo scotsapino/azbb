@@ -5,7 +5,7 @@
     "location": {
       "type": "string"
     },
-    "CostCenter" :{
+    "costCenterTag" :{
       "type" : "string",
       "defaultValue": "1052",
       "allowedValues": [
@@ -19,7 +19,7 @@
         "description": "1052 - ITOps(Andrew); 1054 - Dev1(Dino); 1055 - Dev2(Daniel);1058 - InfoSec(Billy);1059 - Network/Storage(Jorge)"
           }      
     },
-    "DataCenter" :{
+    "dataCenterTag" :{
       "type" : "string",
       "defaultValue": "WestUS2",
       "allowedValues": [
@@ -32,7 +32,7 @@
         "description": "Azure region where the resource will be deployed"
       }
     },
-    "Department" : {
+    "departmentTag" : {
       "type" : "string",
       "defaultValue": "InformationTechnology",
       "allowedValues": [
@@ -42,7 +42,7 @@
         "description": "Department who owns the resources"
       }
     },
-    "Environment" : {
+    "environmentTag" : {
       "type" : "string",
       "defaultValue": "Production",
       "allowedValues": [
@@ -54,7 +54,7 @@
         "description": "Environment where owns the resources reside"
       }
     },
-    "SupportGroup" : {
+    "supportGroupTag" : {
       "type" : "string",
       "defaultValue": "Infrastructure",
       "allowedValues": [
@@ -65,7 +65,7 @@
         "description": "Group who supports the Azure resource"
       }
     },
-    "Project" : {
+    "projectTag" : {
       "type" : "string",
       "defaultValue": "",
       "metadata": {
